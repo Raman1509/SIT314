@@ -1,0 +1,55 @@
+#include "thingProperties.h"
+
+#define TRIG_PIN 12
+#define ECHO_PIN 8
+#define ALERT_THRESHOLD 107
+
+void setup() {
+  Serial.begin(9600);
+  delay(1500); // Wait for a Serial Monitor without blocking if none is found
+
+  initProperties();
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  ArduinoCloud.begin(ArduinoIoTPreferredConnection);
+  setDebugMessageLevel(2);
+  ArduinoCloud.printDebugInfo();
+}
+
+void loop() {
+  ArduinoCloud.update();
+
+  long duration;
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  duration = pulseIn(ECHO_PIN, HIGH);
+  float distance_cm = duration * 0.034 / 2;
+
+  // Check if the distance exceeds the threshold
+  if (distance_cm > ALERT_THRESHOLD) {
+    Serial.println("ALERT: Trash bin is almost full!");
+    // Add any additional actions you want to perform when the threshold is exceeded
+  }
+
+  // Update the distance property with the measured value in centimeters
+  distanceMetres = distance_cm / 100.0; // Convert to meters for the property
+
+  Serial.print("Distance: ");
+  Serial.print(distance_cm);
+  Serial.println(" cm");
+
+  delay(1000); // Wait for a second before taking the next reading
+}
+
+/*
+  Since distanceMetres is READ_WRITE variable, onDistanceMetresChange() is
+  executed every time a new value is received from IoT Cloud.
+*/
+void onDistanceMetresChange() {
+  // Add your code here to act upon distanceMetres change (if needed)
+}
